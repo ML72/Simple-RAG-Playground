@@ -15,6 +15,21 @@ load_dotenv()
 
 import giskard
 from giskard.rag import KnowledgeBase, generate_testset
+from giskard.rag.question_generators import (
+    simple_questions,
+    complex_questions,
+    distracting_questions,
+    situational_questions,
+    double_questions
+)
+
+QUESTION_TYPES = {
+    "simple": simple_questions,
+    "complex": complex_questions,
+    "distracting": distracting_questions,
+    "situational": situational_questions,
+    "double": double_questions
+}
 
 # Suppress Pydantic serializer warnings from Giskard
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
@@ -62,7 +77,7 @@ def create_knowledge_base(documents):
     return knowledge_base
 
 
-def generate_test_questions(knowledge_base, num_questions, agent_description=None):
+def generate_test_questions(knowledge_base, num_questions, agent_description=None, question_types=None):
     """
     Generate test set using Giskard RAGET
     
@@ -70,6 +85,7 @@ def generate_test_questions(knowledge_base, num_questions, agent_description=Non
         knowledge_base: Giskard KnowledgeBase object
         num_questions: Number of test questions to generate
         agent_description: Optional description of the RAG agent
+        question_types: Optional list of question types to generate
         
     Returns:
         Generated testset
@@ -83,11 +99,27 @@ def generate_test_questions(knowledge_base, num_questions, agent_description=Non
     giskard.llm.set_llm_model("openai/gpt-4o")
     giskard.llm.set_embedding_model("openai/text-embedding-3-small")
     
+    # Resolve question generators
+    generators = None
+    if question_types:
+        generators = []
+        for q_type in question_types:
+            if q_type in QUESTION_TYPES:
+                generators.append(QUESTION_TYPES[q_type])
+            else:
+                print(f"Warning: Unsupported question type '{q_type}'. Skipping.")
+        
+        if not generators:
+            print("Warning: No valid question generators found. Using default.")
+            generators = None
+
+    # Generate testset
     testset = generate_testset(
         knowledge_base,
         num_questions=num_questions,
         language='en',
-        agent_description=agent_description
+        agent_description=agent_description,
+        question_generators=generators
     )
     
     print(f"Generated {len(testset)} test questions")
@@ -136,14 +168,21 @@ def main():
     parser.add_argument(
         "--num-questions",
         type=int,
-        default=40,
-        help="Number of test questions to generate (default: 40)"
+        default=50,
+        help="Number of test questions to generate (default: 50)"
     )
     parser.add_argument(
         "--agent-description",
         type=str,
         default=None,
         help="Description of the RAG agent (helps guide question generation)"
+    )
+    parser.add_argument(
+        "--question-types",
+        nargs="+",
+        choices=list(QUESTION_TYPES.keys()),
+        default=list(QUESTION_TYPES.keys()),
+        help=f"List of question types to generate. Available: {', '.join(QUESTION_TYPES.keys())}"
     )
     
     args = parser.parse_args()
@@ -166,10 +205,12 @@ def main():
     knowledge_base = create_knowledge_base(documents)
     
     # Generate test set
+    print(f"Selected question types: {args.question_types}")
     testset = generate_test_questions(
         knowledge_base,
         num_questions=args.num_questions,
-        agent_description=args.agent_description
+        agent_description=args.agent_description,
+        question_types=args.question_types
     )
     
     # Save test set

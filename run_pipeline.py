@@ -15,11 +15,10 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# --- Modern LangChain Imports ---
+# --- LangChain Imports ---
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 # --- Giskard Imports ---
@@ -49,7 +48,7 @@ def format_docs(docs):
 
 def setup_rag_pipeline(documents, prompt_template, chunk_size=500, chunk_overlap=100):
     """
-    Setup the RAG pipeline using modern LCEL (LangChain Expression Language).
+    Setup the RAG pipeline using LCEL (LangChain Expression Language).
     """
     print("\n" + "="*60)
     print("Setting up RAG Pipeline (LCEL Mode)...")
@@ -73,7 +72,6 @@ def setup_rag_pipeline(documents, prompt_template, chunk_size=500, chunk_overlap
     llm = ChatOpenAI(temperature=0, model_name="gpt-4o-mini")
     
     # 4. Define LCEL Chain
-    # This replaces the "Black Box" create_retrieval_chain
     # We explicitly define how data flows from input -> retriever -> prompt -> llm
     
     rag_chain = (
@@ -86,12 +84,12 @@ def setup_rag_pipeline(documents, prompt_template, chunk_size=500, chunk_overlap
         | StrOutputParser()
     )
     
-    print("✅ Modern RAG pipeline setup complete\n")
+    print("✅ RAG pipeline setup complete\n")
     return rag_chain
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Evaluate Modern LCEL RAG pipeline')
+    parser = argparse.ArgumentParser(description='Evaluate RAG pipeline')
     parser.add_argument('--documents', type=str, default='data/document_texts.json')
     parser.add_argument('--test-data', type=str, default='data/test_data.json')
     parser.add_argument('--output-dir', type=str, default='results')
