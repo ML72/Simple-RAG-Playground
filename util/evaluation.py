@@ -1,20 +1,29 @@
 from datetime import datetime
+import json
 from giskard.rag import evaluate
+from giskard.llm.client.openai import OpenAIClient
 
-def evaluate_with_raget(rag_chain, testset, knowledge_base):
+def evaluate_with_raget(rag_chain, testset, knowledge_base, eval_model=None):
     """Evaluate using Giskard's RAGET."""
     print("\n" + "="*60)
     print("Running RAGET Evaluation...")
+    if eval_model:
+        print(f"Using LLM model: {eval_model}")
     print("="*60 + "\n")
     
     # Modern LCEL chains usually return the string directly via StrOutputParser
     def predict_fn(question: str, history=None) -> str:
         return rag_chain.invoke({"input": question})
     
+    llm_client = None
+    if eval_model:
+        llm_client = OpenAIClient(model=eval_model)
+
     report = evaluate(
         predict_fn,
         testset=testset,
-        knowledge_base=knowledge_base
+        knowledge_base=knowledge_base,
+        llm_client=llm_client
     )
     
     return report
@@ -64,7 +73,7 @@ def calculate_quality_score(report):
         return 0.0
 
 
-def save_results_as_markdown(report, quality_score, output_path, test_count, doc_count):
+def save_results_as_markdown(report, quality_score, output_path, test_count, doc_count, config=None):
     """Save results as markdown."""
     # Determine quality level
     if quality_score >= 90:
@@ -92,10 +101,13 @@ def save_results_as_markdown(report, quality_score, output_path, test_count, doc
 
 ## {emoji} Overall Quality Score: {quality_score}/100 ({level})
 
-**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
-**Evaluation Method:** RAGET (Modern LCEL Pipeline)  
-**Test Questions:** {test_count}  
-**Knowledge Base Documents:** {doc_count}
+**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+**Evaluation Method:** RAG Evaluation Toolkit (RAGET)
+
+**Number of Test Questions:** {test_count}
+
+**Number of Knowledge Base Documents:** {doc_count}
 
 ## 📊 Detailed Metrics
 
@@ -147,6 +159,13 @@ def save_results_as_markdown(report, quality_score, output_path, test_count, doc
             
             md_content += "\n"
 
+    # Configuration Section
+    if config:
+        md_content += "## ⚙️ Configuration\n\n"
+        md_content += "```json\n"
+        md_content += json.dumps(config, indent=4)
+        md_content += "\n```\n\n"
+
     # Detailed Results Section
     md_content += "## 📋 Detailed Results\n\n"
     
@@ -163,8 +182,8 @@ def save_results_as_markdown(report, quality_score, output_path, test_count, doc
             # Use enumerate to avoid index type issues (index might be UUID string)
             for i, (index, row) in enumerate(df.iterrows()):
                 question = row.get('question', 'N/A')
-                ref_answer = row.get('reference_answer', 'N/A')
-                agent_answer = row.get('agent_answer', 'N/A')
+                ref_answer = str(row.get('reference_answer', 'N/A')).replace('\n', ' ').replace('\r', '')
+                agent_answer = str(row.get('agent_answer', 'N/A')).replace('\n', ' ').replace('\r', '')
                 
                 # Determine correctness status
                 correctness = row.get('correctness', None)

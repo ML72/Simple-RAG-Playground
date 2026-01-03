@@ -1,21 +1,38 @@
 from langchain_core.prompts import ChatPromptTemplate
 
-def default_prompt():
+def simple_prompt():
     """
-    The default RAG prompt.
+    The simple RAG prompt.
     """
     return ChatPromptTemplate.from_template(
-        """Use the following pieces of context to answer the question at the end.
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
-        
+        """You are a precise question answering system. Your task is to use the context below to provide a short answer to the specified question.
+        Please be concise and answer in only a single short paragraph.
+
         Context: {context}
-        
+
         Question: {input}
+
+        Answer:"""
+    )
+
+def custom_prompt():
+    """
+    The custom RAG prompt.
+    """
+    return ChatPromptTemplate.from_template(
+        """You are a helpful chatbot. Use the context below to answer the question at the end. Answer in a single paragraph.
+        If you don't know the answer, just say that you don't know, don't try to make up an answer.
+
+        Context: {context}
+
+        Question: {input}
+
         Answer:"""
     )
 
 PROMPT_REGISTRY = {
-    "default": default_prompt,
+    "simple": simple_prompt,
+    "custom": custom_prompt,
 }
 
 def get_prompt(name):

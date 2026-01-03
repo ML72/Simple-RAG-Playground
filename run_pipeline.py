@@ -43,10 +43,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 def format_docs(docs):
     """Helper for LCEL: Join retrieved documents into a single string."""
-    return "\n\n".join(doc.page_content for doc in docs)
+    return " ".join(doc.page_content for doc in docs)
 
 
-def setup_rag_pipeline(documents, prompt_template, chunk_size=500, chunk_overlap=100):
+def setup_rag_pipeline(documents, prompt_template, agent_model, chunk_size=500, chunk_overlap=100):
     """
     Setup the RAG pipeline using LCEL (LangChain Expression Language).
     """
@@ -69,7 +69,7 @@ def setup_rag_pipeline(documents, prompt_template, chunk_size=500, chunk_overlap
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     
     # 3. LLM & Prompt
-    llm = ChatOpenAI(temperature=0, model_name="gpt-4o-mini")
+    llm = ChatOpenAI(temperature=0, model_name=agent_model)
     
     # 4. Define LCEL Chain
     # We explicitly define how data flows from input -> retriever -> prompt -> llm
@@ -95,7 +95,9 @@ def main():
     parser.add_argument('--output-dir', type=str, default='results')
     parser.add_argument('--chunk-size', type=int, default=500)
     parser.add_argument('--chunk-overlap', type=int, default=100)
-    parser.add_argument('--prompt', type=str, default='default', help='Name of the prompt to use (default: default)')
+    parser.add_argument('--prompt', type=str, default='simple')
+    parser.add_argument('--agent-model', type=str, default='gpt-4o-mini', help='LLM model to use for RAG question answering')
+    parser.add_argument('--eval-model', type=str, default='gpt-4o-mini', help='LLM model to use for evaluation of correctness')
     
     args = parser.parse_args()
     
@@ -113,7 +115,6 @@ def main():
     # Get Prompt
     try:
         prompt_template = get_prompt(args.prompt)
-        print(f"Using prompt: {args.prompt}")
     except ValueError as e:
         print(f"Error: {e}")
         return
@@ -122,6 +123,7 @@ def main():
     rag_chain = setup_rag_pipeline(
         documents,
         prompt_template,
+        args.agent_model,
         chunk_size=args.chunk_size,
         chunk_overlap=args.chunk_overlap
     )
@@ -135,7 +137,7 @@ def main():
     testset = create_giskard_testset_from_data(test_data)
     
     # Evaluate
-    report = evaluate_with_raget(rag_chain, testset, knowledge_base)
+    report = evaluate_with_raget(rag_chain, testset, knowledge_base, eval_model=args.eval_model)
     quality_score = calculate_quality_score(report)
     
     # Save Results
@@ -147,8 +149,12 @@ def main():
     md_path = output_dir / f"evaluation_report_{timestamp}.md"
     
     save_results_as_markdown(
-        report, quality_score, md_path, 
-        len(test_data), len(documents)
+        report,
+        quality_score,
+        md_path, 
+        len(test_data),
+        len(documents),
+        config=vars(args)
     )
     
     print(f"✅ Report saved to: {md_path}")
