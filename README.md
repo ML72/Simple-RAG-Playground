@@ -21,32 +21,33 @@ This project demonstrates:
 
 1. **Create Conda environment (recommended)**:
 
-If you have Conda installed, it is recommended to create a separate Python environment:
-```bash
-conda create -n simple_rag_playground python=3.12
-```
+   If you have Conda installed, it is recommended to create a separate Python environment:
+   ```bash
+   conda create -n simple_rag_playground python=3.12
+   ```
 
-Then activate the environment:
-```bash
-conda activate simple_rag_playground
-```
+   Then activate the environment:
+   ```bash
+   conda activate simple_rag_playground
+   ```
 
 2. **Install dependencies**:
-```bash
-pip install -r requirements.txt
-```
+
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. **Set your OpenAI API key**:
 
-Create a `.env` file in the root directory (you can copy `.env.example`):
-```bash
-cp .env.example .env
-```
+   Create a `.env` file in the root directory (you can copy `.env.example`):
+   ```bash
+   cp .env.example .env
+   ```
 
-Then edit `.env` and add your API key:
-```
-OPENAI_API_KEY=sk-...
-```
+   Then edit `.env` and add your API key:
+   ```
+   OPENAI_API_KEY=sk-...
+   ```
 
 ## Running the Application
 
@@ -54,14 +55,16 @@ OPENAI_API_KEY=sk-...
 
 If you want to create a new knowledge base from Wikipedia topics:
 ```bash
-python scripts/generate_knowledge_base.py "Climate Change, Renewable Energy" --output data/document_texts.json
+python scripts/generate_knowledge_base.py --topics "Climate Change, Renewable Energy" --output data/document_texts.json
 ```
+
+By default, we generate a knowledge base related to cybersecurity, which is a relatively niche topic that LLM pretraining data might not exhaustively cover. However, feel free to specify other topics to cover using the `--topics` flag, which accepts a comma delimited string of topics.
 
 ### 2. Generate Test Set (Optional)
 
 If you want to generate new test questions from your knowledge base:
 ```bash
-python scripts/generate_test_set.py --input data/document_texts.json --output data/test_data.json --num-questions 20
+python scripts/generate_test_set.py --input data/document_texts.json --output data/test_data.json --num-questions 50
 ```
 
 ### 3. Run RAG Pipeline & Evaluation
@@ -74,12 +77,16 @@ python run_pipeline.py
 **Options:**
 - `--documents`: Path to document JSON (default: `data/document_texts.json`)
 - `--test-data`: Path to test data JSON (default: `data/test_data.json`)
-- `--prompt`: Prompt template to use (default: `default`)
+- `--prompt`: Prompt template to use (default: `simple`)
 - `--output-dir`: Directory for results (default: `results`)
+- `--chunk-size`: Size of text chunks for processing (default: `500`)
+- `--chunk-overlap`: Overlap between consecutive chunks (default: `100`)
+- `--agent-model`: LLM model to use for RAG question answering (default: `gpt-4o-mini`)
+- `--eval-model`: LLM model to use for evaluation of correctness (default: `gpt-4o-mini`)
 
 Example:
 ```bash
-python run_pipeline.py --prompt default --chunk-size 1000
+python run_pipeline.py --prompt simple --chunk-size 1000 --agent-model gpt-4o
 ```
 
 ## What It Does
@@ -94,8 +101,8 @@ python run_pipeline.py --prompt default --chunk-size 1000
    - Uses Giskard's RAGET to evaluate answers against the knowledge base.
    - Checks for correctness, faithfulness, and context relevance.
 4. **Generates Report**: Creates a detailed markdown report with:
-   - Overall Quality Score (0-100).
-   - Performance breakdown by question category (Simple, Complex, Distracting, etc.).
+   - Overall Quality Score (0-100). Currently this is just the accuracy.
+   - Performance breakdown by question category (Simple, Complex, Distracting, etc).
    - Detailed logs of every question, answer, and evaluation result.
 
 ## Output
@@ -135,12 +142,4 @@ The script will:
 - **Change topics**: Use `scripts/generate_knowledge_base.py` with different topics.
 - **Change chunk size**: Use the `--chunk-size` argument when running `run_pipeline.py`.
 - **Add more tests**: Use `scripts/generate_test_set.py` with a higher `--num-questions`.
-- **Modify Prompts**: Edit `util/prompts.py` to add or modify prompt templates.
-
-## Notes
-
-- Uses RAGET (RAG Evaluation Toolkit) specifically designed for RAG systems
-- Automatically generates test questions from your knowledge base
-- Provides actionable insights for improving RAG quality
-- Quality score makes it easy to track improvements over time
-- For production use, consider increasing `num_questions` for more thorough evaluation
+- **Modify prompts**: Edit `util/prompts.py` to add or modify prompt templates.
