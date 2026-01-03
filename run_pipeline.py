@@ -10,6 +10,10 @@ import warnings
 from datetime import datetime
 from pathlib import Path
 from operator import itemgetter
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # --- Modern LangChain Imports ---
 from langchain_text_splitters import RecursiveCharacterTextSplitter

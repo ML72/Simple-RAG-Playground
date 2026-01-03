@@ -4,7 +4,6 @@ Loads documents about a specified topic and saves them to JSON
 """
 import argparse
 import json
-import os
 import warnings
 from pathlib import Path
 from langchain_community.document_loaders import WikipediaLoader

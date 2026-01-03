@@ -8,6 +8,11 @@ import os
 import warnings
 from pathlib import Path
 import pandas as pd
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 import giskard
 from giskard.rag import KnowledgeBase, generate_testset
 

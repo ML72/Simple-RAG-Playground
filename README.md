@@ -19,26 +19,33 @@ This project demonstrates:
 
 ## Setup
 
-1. **Install dependencies**:
+1. **Create Conda environment (recommended)**:
+
+If you have Conda installed, it is recommended to create a separate Python environment:
+```bash
+conda create -n simple_rag_playground python=3.12
+```
+
+Then activate the environment:
+```bash
+conda activate simple_rag_playground
+```
+
+2. **Install dependencies**:
 ```bash
 pip install -r requirements.txt
 ```
 
-2. **Set your OpenAI API key**:
+3. **Set your OpenAI API key**:
 
-On Windows (PowerShell):
-```powershell
-$env:OPENAI_API_KEY="your-api-key-here"
-```
-
-On Windows (Command Prompt):
-```cmd
-set OPENAI_API_KEY=your-api-key-here
-```
-
-On Linux/Mac:
+Create a `.env` file in the root directory (you can copy `.env.example`):
 ```bash
-export OPENAI_API_KEY="your-api-key-here"
+cp .env.example .env
+```
+
+Then edit `.env` and add your API key:
+```
+OPENAI_API_KEY=sk-...
 ```
 
 ## Running the Application
