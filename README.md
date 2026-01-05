@@ -31,6 +31,11 @@ This project demonstrates:
    conda activate simple_rag_playground
    ```
 
+   Run the following to make sure pip exists in your conda environment:
+   ```bash
+   conda install pip
+   ```
+
 2. **Install dependencies**:
 
    ```bash
